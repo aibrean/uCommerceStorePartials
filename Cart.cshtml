@@ -1,0 +1,207 @@
+﻿@using UCommerce
+@using UCommerce.Api
+@using UCommerce.Extensions
+@using UCommerce.Runtime
+@{
+    var request = HttpContext.Current.Request;
+    var basket = TransactionLibrary.GetBasket(true).PurchaseOrder;
+    var currency = basket.BillingCurrency;
+
+    if (request.HttpMethod == "POST" && request.Form.AllKeys.Any(x => x == "update-and-continue"))
+    {
+@* For this helper functions refer to /App_Code/uCommerce/Functions/Basket.cshtml *@
+    uCommerce.Functions.Basket.UpdateCartLines("update-and-continue", "quantity-input-", basket);
+    uCommerce.Functions.Basket.AddGiftNote("gift-note", basket);
+    // add personal notes to products
+    foreach (var ol in basket.OrderLines)
+    {
+        var keyId = "personalize" + ol.Id.ToString();
+        uCommerce.Functions.Basket.PersonalizeProduct(keyId,basket,ol);
+    }
+    HttpContext.Current.Response.Redirect("~/store/cart/address");
+}
+if (request.HttpMethod == "POST")
+{
+    HttpContext.Current.Response.Redirect(request.RawUrl);
+}
+
+var subTotal = new Money(0, currency);
+var tax = new Money(0, currency);
+var discount = new Money(0, currency);
+var orderTotal = new Money(0, currency);
+
+
+if (basket.SubTotal.HasValue)
+{
+    subTotal = new Money(basket.SubTotal.Value, currency);
+}
+if (basket.VAT.HasValue)
+{
+    tax = new Money(basket.VAT.Value, currency);
+}
+if (basket.DiscountTotal.HasValue)
+{
+    discount = new Money(basket.DiscountTotal.Value * -1, currency);
+}
+if (basket.OrderTotal.HasValue)
+{
+    orderTotal = new Money(basket.OrderTotal.Value, currency);
+}
+
+//add GiftText to order
+var giftNote = string.Empty;
+if (!basket.GetOrderProperties().Any(p => p.Key == "GiftText"))
+{
+    basket.AddOrderProperty(new UCommerce.EntitiesV2.OrderProperty { Key = "GiftText", Value=" " });
+    basket.Save();
+}
+else {
+    giftNote = basket.GetOrderProperties().First(p => p.Key == "GiftText").Value;
+}
+}
+<div class="row">
+    <div class="small-12 columns">
+        <div class="page-content-box">
+            @if (!basket.OrderLines.Any())
+            {
+                <h2>Empty Cart</h2>
+                    <p>Your cart is empty. Please <a href="~/store/">return to our store and add some items</a>.</p>
+            }
+            else
+            {
+                <form method="post">
+                    <table class="table table-striped" id="cart">
+                        <thead>
+                            <tr>
+                                <th class="span7">Description</th>
+                                <th class="span1 money">Price</th>
+                                <th class="span1 money">&nbsp;</th>
+                                @*Was tax*@
+                                <th class="span2">Quantity</th>
+                                <th class="span1 money">Total</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var lineItem in basket.OrderLines)
+                            {
+                                var product = @CatalogLibrary.GetProduct(lineItem.Sku);
+                                var itemPrice = new Money(lineItem.Price, currency);
+                                //var itemTax = new Money(lineItem.VAT, currency);
+                                var lineTotal = new Money(lineItem.Total.Value, currency);
+                                
+                                <tr class="order-line">
+                                    <td><a href="@CatalogLibrary.GetNiceUrlForProduct(product)">@lineItem.ProductName</a></td>
+                                    <td class="money">
+                                        @if (lineItem.UnitDiscount.HasValue && lineItem.UnitDiscount > 0)
+                                        {
+                                            var nowPrice = new Money((lineItem.Price - lineItem.UnitDiscount.Value), currency);
+                                            
+
+                                            <span style="text-decoration: line-through">
+                                                @itemPrice
+                                            </span>
+                                            @nowPrice
+                                        }
+                                        else
+                                        {
+                                            @itemPrice
+                                        }
+                                    </td>
+                                    <td class="money">
+                                        @*@itemTax*@
+                                        &nbsp;
+                                    </td>
+                                    <td>
+                                        <input type="text" name="quantity-input-@lineItem.OrderLineId" data-orderlineid="@lineItem.OrderLineId" value="@lineItem.Quantity" class="qty" />
+                                    </td>
+                                    <td class="money line-total">
+                                        @if (lineItem.UnitDiscount.HasValue && lineItem.UnitDiscount > 0)
+                                        {
+                                            var nowPrice = new Money((lineItem.Price - lineItem.UnitDiscount.Value), currency);
+                                            lineTotal = new Money(nowPrice.Value * lineItem.Quantity, currency);
+                                        }
+                                        else
+                                        {
+                                            lineTotal = new Money(itemPrice.Value * lineItem.Quantity, currency);
+                                        }
+                                        @lineTotal
+                                    </td>
+        
+                                    <td>
+        
+                                        <button type="submit" class="line-remove button alert" name="basket-remove-item" value="@lineItem.OrderLineId"><i class="fa fa-times"></i></button>
+                                    </td>
+                                </tr>
+                                if (Boolean.Parse(string.IsNullOrWhiteSpace(product["AllowCustom"].Value) ? "false" : product["AllowCustom"].Value))
+                                {
+                                    var keyId = "personalize" + lineItem.Id.ToString();
+                                    <tr>
+                                        <td colspan="6">
+                                            <label>Personalize this product</label>
+                                            <input type="text" name="@keyId" value="@lineItem["PersonalNote"]" />
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            <tr class="order-line">
+                                <td colspan="6">
+                                    <label>Add a gift note</label>
+                                    <input type="text" name="gift-note" value="@giftNote" />
+                                </td>  
+                            </tr>
+                            <tr>
+                                <td rowspan="4">
+                                    <div class="span6">
+                                        <div class="input-append">
+                                            <input type="text" name="voucher-code" />
+                                            <button name="add-voucher" class="button primary hollow" type="submit"><i class="fa fa-plus"></i>Add Voucher</button>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td colspan="2" rowspan="4">
+                                    <button name="update-basket" id="update-basket" class="button secondary update-basket" type="submit"><i class="fa fa-refresh"></i>Update</button>
+                                </td>
+                                <td>Sub total:</td>
+                                <td class="money order-subtotal">
+                                    @subTotal
+                                    @if (basket.DiscountTotal.HasValue && basket.DiscountTotal > 0)
+                                    {
+                                       <br /> <em>reflects discount of @discount</em>
+                                    }
+                                </td>
+                                <td>&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td>Tax:</td>
+                                <td class="money order-tax">
+                                   @* @tax *@
+                                    Calculated later
+                                </td>
+                                <td>&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td>Discounts:</td>
+                                <td class="money order-discounts">
+                                    @discount
+                                </td>
+                                <td>&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td>Order total:</td>
+                                <td class="money order-total">
+                                   @* @orderTotal*@
+                                    Calculated later
+                                </td>
+                                <td>&nbsp;</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="pull-right">
+                        <button name="update-and-continue" class="button primary" type="submit">Continue to Checkout <i class="fa fa-angle-right"></i></button>
+                    </div>
+                </form>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,88 @@
+﻿@using UCommerce.Runtime
+@using UCommerce.Api
+@inherits Umbraco.Web.Mvc.UmbracoTemplatePage
+@{
+    var product = SiteContext.Current.CatalogContext.CurrentProduct;
+
+    var products = SiteContext.Current.CatalogContext.CurrentCatalog.Categories.FirstOrDefault(c => c.CategoryId == product.GetCategories().First().CategoryId).Products.Where(p => p.ProductProperties.Any(pp => pp.ProductDefinitionField.Name == "HomepageFeature" && Convert.ToBoolean(pp.Value))).OrderByDescending(p => p.CreatedOn).Take(6);
+    bool displayInLargeProductFormat = CurrentPage.displayInLargeProductFormat;
+    bool isCDorDVcategory = false;
+
+
+    isCDorDVcategory = product.GetCategories().FirstOrDefault().Name.ContainsAny("CDs,DVDs");
+
+    if (isCDorDVcategory)
+    {
+        displayInLargeProductFormat = (bool)SiteContext.Current.CatalogContext.CurrentCatalog.Categories.FirstOrDefault(c => c.Name == "DVDs").Definition.GetDefinitionFields().Select(cd => cd.Name == "DisplayInLargeProductFormat").First();
+    }
+
+    string divId = displayInLargeProductFormat ? "list-large" : "list-small";
+
+}
+        @if (!isCDorDVcategory)
+        {
+            <section class="row row-margin" id="product-list">
+                <div class="columns small-12">
+                    <div class="page-content-box">
+                        <div class="row align-justify">
+                            <div class="columns small-12 medium-6">
+                                <h1>You MIght Also Like</h1>
+                            </div>
+                            <div class="columns medium-text-right">
+                                <a href="#" class="button primary hollow">View all products</a>
+                            </div>
+                        </div>
+                        <div class="row text-center align-stretch" id="@divId">
+                            @uCommerce.Helpers.Product.DisplayListProducts(products, null, displayInLargeProductFormat)
+                        </div>
+                    </div>
+                </div>
+            </section>
+        }
+        else
+        {
+            if (SiteContext.Current.CatalogContext.CurrentCatalog.Categories.FirstOrDefault(c => c.Name == "CDs").Products.Where(p => p.ProductProperties.Any(pp => pp.ProductDefinitionField.Name == "HomepageFeature" && Convert.ToBoolean(pp.Value))).Count() > 0)
+            {
+                <section class="row row-margin" id="product-list">
+                    <div class="columns small-12">
+                        <div class="page-content-box">
+                            <div class="row align-justify">
+                                <div class="columns small-12 medium-6">
+                                    <h1>You Might Also Like</h1>
+                                </div>
+                                <div class="columns medium-text-right">
+                                    <!-- ##### TODO: View all products will be done later ##### -->
+                                    @*<a href="#" class="button primary hollow">View all products</a>*@
+                                </div>
+                            </div>
+                            <div class="row text-center align-stretch" id="@divId">
+                                @uCommerce.Helpers.Product.DisplayListProducts(SiteContext.Current.CatalogContext.CurrentCatalog.Categories.FirstOrDefault(c => c.Name == "CDs").Products.Where(p => p.ProductProperties.Any(pp => pp.ProductDefinitionField.Name == "HomepageFeature" && Convert.ToBoolean(pp.Value))).OrderByDescending(p => p.CreatedOn).Take(6), null, displayInLargeProductFormat)
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            }
+
+            if (SiteContext.Current.CatalogContext.CurrentCatalog.Categories.FirstOrDefault(c => c.Name == "DVDs").Products.Where(p => p.ProductProperties.Any(pp => pp.ProductDefinitionField.Name == "HomepageFeature" && Convert.ToBoolean(pp.Value))).Count() > 0)
+            {
+                <section class="row row-margin" id="product-list">
+                    <div class="columns small-12">
+                        <div class="page-content-box">
+                            <div class="row align-justify">
+                                <div class="columns small-12 medium-6">
+                                    <h1>You Might Also Like</h1>
+                                </div>
+                                <div class="columns medium-text-right">
+                                    <!-- ##### TODO: View all products will be done later ##### -->
+                                    @*<a href="#" class="button primary hollow">View all products</a>*@
+                                </div>
+                            </div>
+                            <div class="row text-center align-stretch" id="@divId">
+                                @uCommerce.Helpers.Product.DisplayListProducts(SiteContext.Current.CatalogContext.CurrentCatalog.Categories.FirstOrDefault(c => c.Name == "DVDs").Products.Where(p => p.ProductProperties.Any(pp => pp.ProductDefinitionField.Name == "HomepageFeature" && Convert.ToBoolean(pp.Value))).OrderByDescending(p => p.CreatedOn).Take(6), null, displayInLargeProductFormat)
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            }
+
+        }

@@ -1,0 +1,92 @@
+﻿@using UCommerce.Api
+@using UCommerce.EntitiesV2
+@using UCommerce.Extensions
+@using UCommerce.Runtime
+
+
+
+@helper RenderNavigation(ICollection<Category> categories, Category currentCategory)
+{
+    if (!categories.Any())
+    {
+        return;
+    }
+
+    foreach (var category in categories.Where(x => x.DisplayOnSite).OrderBy(x => x.SortOrder))
+    {
+        var css = "";
+        var childrens = category == null ? 0 : category.Categories.Count;
+
+        if (childrens < 1)
+        {
+            css = "class=\"top-level\"";
+        }
+        else if (currentCategory != null && currentCategory.CategoryId == category.CategoryId)
+        {
+            css = " class=\"current is-submenu-item is-accordion-submenu-item\"";
+        }
+        else { css = " class=\"is-submenu-item is-accordion-submenu-item\""; }
+        <li @Html.Raw(css)>
+            <a href="@CatalogLibrary.GetNiceUrlForCategory(category)">Shop By @category.DisplayName()</a>
+            @if (childrens > 0)
+            {
+                @RenderNavigationLevel2(category.Categories, currentCategory)
+            }
+        </li>
+}
+}
+
+@helper RenderNavigationLevel2(ICollection<Category> categories, Category currentCategory)
+{
+    <ul class="menu vertical nested">
+        @foreach (var category in categories.Where(x => x.DisplayOnSite).OrderBy(x => x.SortOrder))
+        {
+            var css = "";
+            if (currentCategory != null && currentCategory.CategoryId == category.CategoryId)
+            {
+                css = " class=\"current is-submenu-item is-accordion-submenu-item\"";
+            }
+            else { css = " class=\"is-submenu-item is-accordion-submenu-item\""; }
+            <li @Html.Raw(css)>
+                <a href="@CatalogLibrary.GetNiceUrlForCategory(category)">@category.DisplayName()</a>
+            </li>
+        }
+    </ul>
+}
+
+@helper RenderCurrentCategoryNavigation(Category currentCategory)
+{
+    <div class="text">
+        <h2 class="sidebar-header">@currentCategory.Name</h2>
+    </div>
+    <ul class="category-list">
+        @foreach (var category in currentCategory.Categories.Where(x => x.DisplayOnSite).OrderBy(x => x.SortOrder))
+        {
+            var productCount = category.Products.Count();
+            if (category.Products.Count() > 0)
+            {
+                <li>
+                    <a href="@CatalogLibrary.GetNiceUrlForCategory(category)">@category.Name <span class="category-count">(@productCount)</span></a>
+                </li>
+            }
+        }
+    </ul>
+}
+
+@if (SiteContext.Current.CatalogContext.CurrentCategory != null)
+{
+    @RenderCurrentCategoryNavigation(SiteContext.Current.CatalogContext.CurrentCategory)
+}
+<div class="text">
+    <h2 class="sidebar-header">Browse Store</h2>
+</div>
+<ul class="vertical menu" data-accordion-menu>
+    @RenderNavigation(CatalogLibrary.GetRootCategories(), SiteContext.Current.CatalogContext.CurrentCategory)
+</ul>
+<hr class="gold" style="margin-top:1rem;" />
+<div class="text">
+    <h3>Basket</h3>
+    @{ Html.RenderPartial("Store/minibasket"); }
+    <p>Discounts can be applied at checkout.</p>
+    <p>Discounts, shipping and tax will be reflected in your basket total once added and/or calculated.</p>
+</div>

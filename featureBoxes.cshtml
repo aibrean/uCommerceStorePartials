@@ -1,0 +1,23 @@
+﻿@inherits Umbraco.Web.Mvc.UmbracoViewPage
+@using Umbraco.Web
+
+@{
+    var items = Model.GetPropertyValue<IEnumerable<IPublishedContent>>("featureBlocks");
+}
+@*Umbraco.TypedMedia(item.GetPropertyValue("image")).GetCropUrl("umbracoFile", "block-desktop")*@
+<!-- carousel of content -->
+<section class="row row-margin align-stretch" id="promo-boxes">
+    @foreach (var item in items)
+    {
+        <article class="columns small-12 medium-4 text-center column-stretch">
+
+            <div class="callout-blue">
+                <div class="text">
+                    <h2>@Umbraco.Field(item, "title")</h2>
+                    @Umbraco.Field(item, "copy")
+                    <a href="#" class="button primary">View all</a>
+                </div>
+            </div>
+        </article>
+        }
+</section>

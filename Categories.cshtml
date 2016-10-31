@@ -1,0 +1,75 @@
+﻿@using UCommerce.Content
+@using UCommerce.EntitiesV2
+@using UCommerce.Extensions
+@using UCommerce.Infrastructure
+@using UCommerce.Runtime
+@using umbraco.MacroEngines
+@using UCommerce.Api
+@{
+    Category category = (SiteContext.Current.CatalogContext.CurrentCategory != null ?
+        SiteContext.Current.CatalogContext.CurrentCategory :
+        SiteContext.Current.CatalogContext.CurrentCatalog.Categories.FirstOrDefault(c => c.Name == "Categories"));
+    UmbracoHelper umbracoHelper = new Umbraco.Web.UmbracoHelper(Umbraco.Web.UmbracoContext.Current);
+
+    IEnumerable<UCommerce.EntitiesV2.Product> products =
+       category.Products
+       .Where(p => p.DisplayOnSite).Distinct();
+
+    bool displayInLargeProductFormat = string.IsNullOrWhiteSpace(category.GetProperties().FirstOrDefault(d => d.GetDefinitionField().Name == "DisplayInLargeProductFormat").GetValue().ToString()) ? false
+        : Convert.ToBoolean(category.GetProperties().FirstOrDefault(d => d.GetDefinitionField().Name == "DisplayInLargeProductFormat").GetValue());
+}
+
+@*add logic to check if there are any nested categories within current one.
+    If not then display all products within this category*@
+
+@if (category.Categories.Count() > 1)
+{
+    foreach (var cat in category.Categories)
+    {
+        var url = CatalogLibrary.GetNiceUrlForCategory(cat);
+        var imageUrl = ObjectFactory.Instance.Resolve<IImageService>().GetImage(cat.ImageMediaId).Url;
+        var imageSource = !string.IsNullOrEmpty(imageUrl) ? umbracoHelper.TypedMedia(imageUrl) : null;
+        <article class="columns small-12 medium-6 large-4 column-stretch">
+            <div class="content-box">
+
+                @if (!string.IsNullOrEmpty(imageUrl))
+                {
+                    <img src="@imageUrl" style="height:200px;width:auto;" />
+                }
+                <div class="text">
+                    <div class="row">
+                        <div class="columns">
+                            <h1><a href="@url">@cat.DisplayName()</a></h1>
+                            @Html.Raw(cat.Description())
+                            <div class="learn-more">
+                                <a href="@url" class="button primary hollow">View Products</a>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </article>
+    }
+    if (products != null && products.Count() > 0)
+    {
+        <div class="columns small-12">
+            <div class="page-content-box">
+                <div class="row text-center align-stretch" id="list-small">
+                    @uCommerce.Helpers.Product.DisplayListProducts(products, null)
+                    @*REMOVED displayInLargeProductFormat*@
+                </div>
+            </div>
+        </div>
+    }
+}
+            @*this part is untested*@
+else
+{
+    <div class="columns small-12">
+        <div class="page-content-box">
+            @*####TODO: modifications in the following partial still needs to be made.####*@
+            @{ Html.RenderPartial("Store/catalog"); }
+        </div>
+    </div>
+                }

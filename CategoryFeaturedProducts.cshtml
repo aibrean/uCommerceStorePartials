@@ -1,0 +1,162 @@
+﻿@using UCommerce.Runtime
+@using UCommerce.Api
+@using UCommerce.Extensions
+@inherits Umbraco.Web.Mvc.UmbracoTemplatePage
+@{
+    var umbracoHelper = new UmbracoHelper(UmbracoContext.Current);
+    UCommerce.EntitiesV2.Category category = (SiteContext.Current.CatalogContext.CurrentCategory != null ?
+       SiteContext.Current.CatalogContext.CurrentCategory :
+       SiteContext.Current.CatalogContext.CurrentCatalog.Categories.FirstOrDefault(c => c.Name == "For the Home"));
+    //TODO: Current catalog is the active catalog - dynamic to whatever the user is on
+    IEnumerable<UCommerce.EntitiesV2.Product> products =
+        category.Products
+        .Where(p =>
+            p.ProductProperties.Any(pp =>
+                pp.ProductDefinitionField.Name == "FeatureInCategory"
+                && Convert.ToBoolean(pp.Value)
+            )
+        )
+        .Distinct()
+        .Take(3);
+    //TODO: Products should display for the active catalog only rather than global
+}
+@if (products.Count() > 0)
+{ 
+    <section class="row row-margin" id="featured-products">
+        <div class="columns small-12">
+            <div class="page-content-box">
+                <div class="row align-justify">
+                    <div class="columns small-12">
+                        <h1>Featured Products in "@category.Name"</h1>
+                    </div>
+                </div>
+                <div class="row text-center" data-equalizer>
+                    @foreach (var product in products)
+                    {
+                        var url = CatalogLibrary.GetNiceUrlForProduct(product);
+                        var price = CatalogLibrary.CalculatePrice(product);
+                        <article class="columns small-12 medium-4">
+                            <div class="product-callout" data-equalizer-watch>
+                                @{
+                                    if (product.Variants.Count > 0)
+                                    {
+                                        if (!string.IsNullOrEmpty(product.Variants.First().GetPropertyValue<string>("VariableImage")))
+                                        {
+                                            var media = product.Variants.First().GetPropertyValue<string>("VariableImage");
+                                            var mediaSource = umbracoHelper.TypedMedia(media);
+                                            <img src="@mediaSource.GetCropUrl("umbracoFile", "store-product-medium"))" class="main-image" />
+                                        }
+                                        else if (!string.IsNullOrEmpty(product.GetPropertyValue<string>("MainProductImage")))
+                                        {
+                                            var media = product.GetPropertyValue<string>("MainProductImage");
+                                            var mediaSource = umbracoHelper.TypedMedia(media);
+                                            <a href="@url">
+                                                <img src="@mediaSource.GetCropUrl("umbracoFile", "store-product-medium")"
+                                                     alt="@product.Name" />
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a href="@url">
+                                                <img src="~/umbraco/ucommerce/images/ui/image_not_found.jpg" alt="@product.Name" />
+                                            </a>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (!string.IsNullOrEmpty(product.GetPropertyValue<string>("MainProductImage")))
+                                        {
+                                            var media = product.GetPropertyValue<string>("MainProductImage");
+                                            var mediaSource = umbracoHelper.TypedMedia(media);
+                                            <a href="@url">
+                                                <img src="@mediaSource.GetCropUrl("umbracoFile", "store-product-medium")"
+                                                     alt="@product.Name" />
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a href="@url">
+                                                <img src="~/umbraco/ucommerce/images/ui/image_not_found.jpg" alt="@product.Name" />
+                                            </a>
+                                        }
+                                    }
+                                }
+                                @*TODO: Grab the product image*@
+                                <h2 class="product-title"><a href="@url">@product.Name</a></h2>
+                                <p class="product-price">@price.YourPrice.Amount.ToString()</p>
+                                <p><strong>SKU: @product.Sku</strong></p>
+                                <form>
+                                    <div class="button-group expanded">
+
+                                        <!-- #### TO DO: Add logic to add item to cart ####
+        For products with multiple SKUs, the "Add to Cart" button wording will change to "Select Options"
+        and instead of adding to basket it will take the user to the product page -->
+                                        @if (product.Variants.Count > 0)
+                                        {
+                                            <a href="@url" class="button primary hollow">View Options</a>
+                                        }
+                                        else
+                                        {
+                                            <a href="@url" class="button primary hollow">View Product</a>
+                                            @*<input name = "add-to-basket" id = "add-to-basket" class="button secondary hollow" type="submit" value="Add to Cart" />*@
+                                        }
+                                        <a href="#modal-@product.Id" class="button secondary hollow">Quick View</a>
+                                    </div>
+                                    <div id="modal-@product.Id" class="modalDialog">
+                                        <div>
+                                            <a href="#close" title="Close" class="close">X</a>
+                                            <div class="product-wrapper">
+                                                <div class="product-image">
+                                                    @{
+                                                        if (product.Variants.Count > 0)
+                                                        {
+                                                            if (!string.IsNullOrEmpty(product.Variants.First().GetPropertyValue<string>("VariableImage")))
+                                                            {
+                                                                var media = product.Variants.First().GetPropertyValue<string>("VariableImage");
+                                                                var mediaSource = umbracoHelper.TypedMedia(media);
+                                                                <img src="@mediaSource.GetCropUrl()" class="main-image" />
+                                                            }
+                                                            else
+                                                            {
+                                                                <a href="@url">
+                                                                    <img class="main-image" src="~/umbraco/ucommerce/images/ui/image_not_found.jpg">
+                                                                </a>
+                                                            }
+                                                        }
+                                                        else {
+
+                                                            if (!string.IsNullOrEmpty(product.GetPropertyValue<string>("MainProductImage")))
+                                                            {
+                                                                //var media = ObjectFactory.Instance.Resolve<IImageService>().GetImage(product.ThumbnailImageMediaId).Url;
+                                                                var media = product.GetPropertyValue<string>("MainProductImage");
+                                                                var mediaSource = umbracoHelper.TypedMedia(media);
+                                                                <a href="@url">
+                                                                    <img src="@mediaSource.GetCropUrl()" />
+                                                                </a>
+                                                            }
+                                                            else
+                                                            {
+                                                                <a href="@url">
+                                                                    <img class="main-image" src="~/umbraco/ucommerce/images/ui/image_not_found.jpg">
+                                                                </a>
+                                                            }
+                                                        }
+                                                    }
+                                                </div>
+                                                <div class="product-description">
+                                                    <h3>@product.DisplayName()</h3>
+                                                    @product.ShortDescription()
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                        </article>
+                                    }
+                </div>
+            </div>
+        </div>
+    </section>
+                                    }

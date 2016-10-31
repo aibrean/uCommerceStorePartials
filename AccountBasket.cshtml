@@ -1,0 +1,23 @@
+﻿@using UCommerce
+@using UCommerce.Api
+@using UCommerce.EntitiesV2
+@using UCommerce.Runtime
+
+@{
+    PurchaseOrder purchaseOrder = null;
+    if (TransactionLibrary.HasBasket())
+    {
+        var basket = TransactionLibrary.GetBasket(false);
+        purchaseOrder = basket.PurchaseOrder;
+    }
+    var itemCount = 0;
+}
+    @if (purchaseOrder == null || !purchaseOrder.OrderLines.Any()) {}
+    else
+    {
+        itemCount = @purchaseOrder.OrderLines.Sum(x => x.Quantity);
+    }
+    
+    <a href="#" class="store-panel" data-toggle="store-quickpanel"><span>Cart&ensp;|&ensp;<i class="fa fa-shopping-cart"></i> @itemCount item(s)</span></a>
+
+

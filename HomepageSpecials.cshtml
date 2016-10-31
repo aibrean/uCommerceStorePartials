@@ -1,0 +1,49 @@
+﻿@using UCommerce.Runtime
+@using UCommerce.Api
+@inherits Umbraco.Web.Mvc.UmbracoTemplatePage
+@{
+    //var products = SiteContext.Current.CatalogContext.CurrentCatalog.Categories.SelectMany(c => c.Products.Where(p => p.ProductProperties.Any(pp => pp.ProductDefinitionField.Name == "HomepageFeature" && Convert.ToBoolean(pp.Value)))).Where(p => p.ProductProperties.Any(pp => pp.ProductDefinitionField.Name == "FeatureInCategory" && Convert.ToBoolean(pp.Value))).Take(3);
+    var products =  SiteContext.Current.CatalogContext.CurrentCatalog.Categories.FirstOrDefault(c => c.Name == "Special Value Promotions").Products;
+    //TODO ^ homepage should NOT also include Feature in Category. Otherwise you get duplicates if they exist in multiple categories.
+
+    //var products = SiteContext.Current.CatalogContext.CurrentCatalog.Categories.FirstOrDefault(c => c.Name == "CDs").Products.Take(1);
+    //var products = CatalogLibrary.GetCatalog().Categories.FirstOrDefault(c => c.Name == "CDs").Products.Take(1);
+    bool displayInLargeProductFormat = CurrentPage.displayInLargeProductFormat;
+}
+
+
+<section class="row row-margin" id="special-promotions">
+    <div class="columns small-12">
+        <div class="page-content-box">
+            <div class="row align-justify">
+                <div class="columns small-12 medium-6">
+                    <h1>Special Value Promotions</h1>
+                </div>
+                <div class="columns medium-text-right">
+                    <!-- ##### TODO: View all promotions will be done later ##### -->
+                    @*<a href="#" class="button primary hollow">View all promotions</a>*@
+                </div>
+            </div>
+            <p>Throughout the year, The Museum Store of The Ronald Reagan Presidential Foundation and Institute offers special promotions you won't want to miss. Check back often to see the very latest - so you can take advantage of extra savings.</p>
+            <div class="row noshow" style="position:relative;">
+                <div class="carousel-wrapper">
+                    <ul class="carousel-promotions">
+                        @*@uCommerce.Helpers.Product.DisplayListProducts(products, null, displayInLargeProductFormat)*@
+                        @uCommerce.Helpers.Product.DisplayListSpecialProducts(products, null)
+                    </ul>
+                </div>
+                <div class='controls'>
+                    <button class='toggle left' data-toggle='prev'><i class="fa fa-angle-left"></i></button>
+                    <button class='toggle right' data-toggle='next'><i class="fa fa-angle-right"></i></button>
+                </div>
+            </div>
+            <!--[if lte IE 9]>
+                  <div class="row">
+               <div class="columns small-12">
+                <a href="https://www.reaganfoundation.org/store/special-value-promotions/c-24/c-1151" class="button primary hollow">View All Promotional Items</a>
+                </div>
+                </div>
+    <![endif]-->
+        </div>
+    </div>
+</section>

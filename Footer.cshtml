@@ -1,0 +1,39 @@
+﻿@inherits Umbraco.Web.Mvc.UmbracoTemplatePage
+@using Umbraco.Web
+@{
+    var siteroot = CurrentPage.AncestorOrSelf(1).UrlAbsolute();
+    int lastSlash = siteroot.LastIndexOf('/');
+    siteroot = (lastSlash > -1) ? siteroot.Substring(0, lastSlash) : siteroot;
+}
+@{
+    if (CurrentPage.Id == 4709)
+    {
+        <div id="store-footer">
+            <div class="row align-middle" style="padding:1rem 0;">
+                <div class="small-12 columns medium-6 small-text-center medium-text-left">
+                    <ul id="footer-links">
+                        <li><a href="@siteroot/store/shipping-information/" title="Shipping Information">Shipping Information</a></li>
+                        <li><a href="@siteroot/store/returns/" title="Returns">Returns Policy</a></li>
+                        <li><a href="@siteroot/store/international-orders/" title="International Orders">International Orders</a></li>
+                    </ul>
+                </div>
+                <div class="small-12 columns medium-6 small-text-center medium-text-right">
+                    <img src="@siteroot/images/credit-cards.png" />
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div id="store-footer">
+            <div class="row align-middle" style="padding:1rem 0;">
+                <div class="small-12 columns medium-6 small-text-center medium-text-left">
+                    @CurrentPage.GetPropertyValue("footerLinks", true)
+                </div>
+                <div class="small-12 columns medium-6 small-text-center medium-text-right">
+                    <img src="@siteroot/images/credit-cards.png" />
+                </div>
+            </div>
+        </div>         
+    }
+}

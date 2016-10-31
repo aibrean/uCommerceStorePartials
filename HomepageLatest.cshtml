@@ -1,0 +1,24 @@
+﻿@using UCommerce.Runtime
+@using UCommerce.Api
+@inherits Umbraco.Web.Mvc.UmbracoTemplatePage
+@{
+    var products =
+        SiteContext.Current.CatalogContext.CurrentCatalog.Categories
+        .SelectMany(c =>
+            c.Products.Where(p =>
+                p.DisplayOnSite)
+        )
+        .OrderByDescending(p => p.CreatedOn)
+        .Distinct()
+        .Take(6);
+
+    bool displayInLargeProductFormat = CurrentPage.displayInLargeProductFormat;
+    string divId = displayInLargeProductFormat ? "list-large" : "list-small";
+
+}
+<div class="row text-center align-stretch" id="@divId">
+    @uCommerce.Helpers.Product.DisplayListProducts(products, null)
+    @*
+        @uCommerce.Helpers.Product.DisplayListProducts(products, null, displayInLargeProductFormat)
+    *@
+</div>

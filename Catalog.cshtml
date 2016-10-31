@@ -1,0 +1,25 @@
+﻿@using UCommerce.Content
+@using UCommerce.EntitiesV2
+@using UCommerce.Extensions
+@using UCommerce.Infrastructure
+@using umbraco.MacroEngines
+@using UCommerce.Runtime
+@using UCommerce.Api
+@inherits Umbraco.Web.Mvc.UmbracoTemplatePage
+@{
+    Category category = SiteContext.Current.CatalogContext.CurrentCategory;
+    //var products = SiteContext.Current.CatalogContext.CurrentCatalog.Categories.SelectMany(c => c.Products.Where(p => p.ProductProperties.Any(pp => pp.ProductDefinitionField.Name == "HomepageFeature" && Convert.ToBoolean(pp.Value)))).OrderByDescending(p => p.CreatedOn).Take(6);
+    var products = CatalogLibrary.GetProducts(category).AsQueryable();
+    // (c => c.CategoryId == category.CategoryId).Products.Where(p => p.ProductProperties.Any(pp => pp.ProductDefinitionField.Name == "HomepageFeature" && Convert.ToBoolean(pp.Value))).OrderByDescending(p => p.CreatedOn);
+    bool displayInLargeProductFormat = string.IsNullOrWhiteSpace(category.GetProperties().FirstOrDefault(d => d.GetDefinitionField().Name == "DisplayInLargeProductFormat").GetValue().ToString()) ? false
+        : Convert.ToBoolean(category.GetProperties().FirstOrDefault(d => d.GetDefinitionField().Name == "DisplayInLargeProductFormat").GetValue());
+
+    string divId = displayInLargeProductFormat ? "list-large" : "list-small";
+
+    }
+
+<div class="row text-center align-stretch" id="@divId">
+    @uCommerce.Helpers.Product.DisplayListProducts(products, null)
+</div>
+@*REMOVED displayInLargeProductFormat*@
+@*TODO: displayInLargeProductFormat is not changing based on selection. CDs currently is set to large format and is showing list-small*@

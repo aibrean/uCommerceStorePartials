@@ -1,0 +1,66 @@
+﻿@using UCommerce
+@using UCommerce.EntitiesV2
+@using UCommerce.Api
+@{
+    if (HttpContext.Current.Request.HttpMethod == "POST" && HttpContext.Current.Request.Form.AllKeys.Any(x => x == "update-payment"))
+    {
+        int newPaymentMethodId;
+        if (int.TryParse(HttpContext.Current.Request.Form["payment-method"], out newPaymentMethodId))
+        {
+            TransactionLibrary.ExecuteBasketPipeline();
+            TransactionLibrary.CreatePayment(newPaymentMethodId, requestPayment: false);
+            HttpContext.Current.Response.Redirect("~/store/cart/preview");
+        }
+
+    }
+
+    var basket = TransactionLibrary.GetBasket().PurchaseOrder;
+    var payment = basket.Payments.FirstOrDefault();
+}
+@helper RenderPaymentMethodLabel(PaymentMethod paymentMethod, PurchaseOrder basket)
+{
+    decimal feePercent = paymentMethod.FeePercent;
+
+    var fee = paymentMethod.GetFeeForCurrency(basket.BillingCurrency);
+    var formattedFee = new Money((fee == null ? 0 : fee.Fee), basket.BillingCurrency);
+    
+    @paymentMethod.Name //<text>(</text>@formattedFee <text>+</text> @feePercent.ToString("0.00")<text>%)</text> 
+}
+@{
+    var billingCountry = TransactionLibrary.GetBasket().PurchaseOrder.OrderAddresses.FirstOrDefault().Country;
+    //var billingCountry = TransactionLibrary.GetShipmentInformation().Country;
+    var availableBillingMethods = TransactionLibrary.GetPaymentMethods(billingCountry);
+}
+<form method="post" class="row">
+    <div class="small-12 columns">
+        <div class="page-content-box">
+                <h3>Payment method</h3>
+                <br />
+                @if (availableBillingMethods.Any())
+            {
+                foreach (var paymentMethod in availableBillingMethods)
+                {
+                        <label class="radio">
+                            <input type="radio" name="payment-method" @(payment != null && payment.PaymentMethod.Equals(paymentMethod) ? "checked" : string.Empty)
+                                   value="@paymentMethod.PaymentMethodId" />@RenderPaymentMethodLabel(paymentMethod, basket)
+                            </label>
+                    }
+                }
+                else
+                {
+                    <p class="alert">WARNING: No payment methods have been configured for @billingCountry.Name within <a href="http://ucommerce.dk">UCommerce</a> administration area.</p>
+                }
+        </div>
+        <div class="page-content-box">
+            <div class="row align-justify">
+                <div class="small-12 columns medium-6">
+                    <a href="~/store/cart/shipping" class="button secondary">Back to Shipping Method</a>
+
+                </div>
+                <div class="small-12 columns medium-6 text-left medium-text-right">
+                    <button name="update-payment" class="button primary" type="submit">Continue to Summary Page <i class="fa fa-angle-right"></i></button>
+                </div>
+            </div>
+        </div> 
+    </div>
+</form>

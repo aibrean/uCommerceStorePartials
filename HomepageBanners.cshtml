@@ -1,0 +1,52 @@
+﻿@inherits Umbraco.Web.Mvc.UmbracoViewPage
+@using Umbraco.Web
+
+@{
+    var items = Model.GetPropertyValue<IEnumerable<IPublishedContent>>("storeCarousel");
+}
+
+<!-- carousel of content -->
+<section class="row">
+    <div class="columns small-12">
+        <div class="slider-pro" id="store-slider">
+            <div class="sp-slides">
+                @foreach (var item in items)
+                {
+                    <div class="sp-slide">
+                        <a href="@Umbraco.Field(item, "link")">
+                            <img class="sp-image" src="/css/images/blank.gif" data-src="@Umbraco.TypedMedia(item.GetPropertyValue("image")).GetCropUrl("umbracoFile", "full-size")" />
+                        </a>
+                        <div class="sp-caption">@Umbraco.Field(item, "caption")</div>
+                    </div>
+                }
+            </div>
+
+            <div class="sp-thumbnails">
+                @foreach (var item in items)
+                {
+                    <div class="sp-thumbnail">
+                        <div class="sp-thumbnail-image-container">
+                            <img class="sp-thumbnail-image" src="@Umbraco.TypedMedia(item.GetPropertyValue("image")).GetCropUrl("umbracoFile", "thumbnail")" />
+                        </div>
+                        <div class="sp-thumbnail-text">
+                            <div class="sp-thumbnail-title">@Umbraco.Field(item, "title")</div>
+                            <div class="sp-thumbnail-description">@Umbraco.Field(item, "summary")</div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+</section>
+<!-- END Carousel -->
+
+
+@*<div id="myCarousel" class="carousel slide">
+    <div class="carousel-inner">
+        <div class="item active"><img src="/img/ucommerce/homepage-banner-black-wonderland.jpg" /></div>
+        <div class="item"><img src="/img/ucommerce/homepage-banner-blue-kittens.jpg" /></div>
+        <div class="item"><img src="/img/ucommerce/homepage-banner-purple-wonderland.jpg" /></div>
+    </div>
+    <a class="carousel-control left" href="#myCarousel" data-slide="prev">&lsaquo;</a> <a class="carousel-control right" href="#myCarousel" data-slide="next">&rsaquo;</a>
+</div>*@

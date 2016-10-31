@@ -1,0 +1,40 @@
+﻿@*inherits umbraco.MacroEngines.DynamicNodeContext*@
+@*TODO: Get breadcrumb trail working - commented out top inherit cause it puked*@
+@using UCommerce.Api
+@using UCommerce.EntitiesV2
+@using UCommerce.Extensions
+@using UCommerce.Runtime
+@inherits Umbraco.Web.Mvc.UmbracoTemplatePage
+
+<div class="row breadcrumb-nav hide-for-small-only">
+    <div class="columns small-12">
+        <nav aria-label="You are here:" role="navigation">
+            <ul class="breadcrumbs">
+                @{
+                    Category lastCategory = null;
+                    foreach (var category in SiteContext.Current.CatalogContext.CurrentCategories)
+                    {
+                        <li><a href="@CatalogLibrary.GetNiceUrlForCategory(category)">@category.DisplayName()</a></li>
+                        lastCategory = category;
+                    }
+                @*TODO: Breadcrumbs trail for products needs to also include category*@
+                    Product product = SiteContext.Current.CatalogContext.CurrentProduct;
+                    if (product != null)
+                    {
+                        <li><a href="@CatalogLibrary.GetNiceUrlForProduct(product, lastCategory)">@product.DisplayName()</a></li>
+                    }
+
+                    if (lastCategory == null && product == null)
+                    {
+                        foreach (var level in CurrentPage.Ancestors().Where("Visible"))
+                        {
+                            <li><a href="@level.Url">@level.Name</a></li>
+                        }
+
+                        <li>@CurrentPage.Name</li>
+                    }
+                }
+            </ul>
+        </nav>
+    </div>
+</div>
